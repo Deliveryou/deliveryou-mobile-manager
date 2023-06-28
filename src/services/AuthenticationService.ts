@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import { APIService } from "./APIService";
 import RNSecureKeyStore, { ACCESSIBLE } from "react-native-secure-key-store";
 import { DeviceEventEmitter } from "react-native";
+import { GraphQLService } from "./GraphQLService";
 
 export namespace AuthenticationService {
     export function login(phone: string, password: string, onLogInSuccessfully?: (response: LogInResponse) => void, onLogInFailure?: (error?: AxiosError | string) => void) {
@@ -133,5 +134,11 @@ export namespace AuthenticationService {
             .then(() => onLogOutSuccess?.())
             .catch((error) => onLogOutFailure?.(error))
         DeviceEventEmitter.emit('event.app.authenticationState', false)
+    }
+
+    export function register(user: { [key: string]: any }, onSuccess: () => void, onError?: (error: any) => void) {
+        APIService.axios('/api/user/register', 'post', user)
+            .then(response => onSuccess())
+            .then(error => onError?.(error))
     }
 }

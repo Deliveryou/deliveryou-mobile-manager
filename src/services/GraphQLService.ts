@@ -36,7 +36,8 @@ export namespace GraphQLService {
             citizenId?: string,
             profilePictureUrl?: string,
             dateOfBirth?: string,
-            deleted?: boolean
+            deleted?: boolean,
+            averageRating?: number
         }
 
         export type ChatSession = {
@@ -85,6 +86,51 @@ export namespace GraphQLService {
         export type CategoryDistribution = {
             type: 'Other' | 'Fragile' | 'Electronics' | 'Clothing' | 'Food'
             count: number
+        }
+
+        export type Wallet = {
+            id: number
+            shipper: User
+            credit: number
+            accountNumber?: string
+            accountOwner?: string
+            branch?: string
+        }
+
+        export type Withdraw = {
+            id: number
+            amount: number
+            wallet: Wallet
+            date: string
+            validWithinDays: number
+        }
+
+        export type TransactionHistory = {
+            id: number
+            wallet: Wallet
+            amount: number
+            creationTime: string,
+            content?: string,
+            user: User,
+            photoUrl?: string
+        }
+
+        export type Rating = {
+            id: number,
+            deliveryPackage: DeliveryPackage,
+            content: string,
+            rate: number,
+            marked: boolean,
+            date: string
+        }
+
+        export type SystemLog = {
+            id: number,
+            event: string,
+            date: string,
+            previousData: string,
+            newData: string,
+            user: User
         }
     }
 

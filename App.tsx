@@ -22,6 +22,15 @@ import UserDashBoard from './src/screens/main/managment/UserDashBoard';
 import DeliveryPackageViewer from './src/screens/main/managment/DeliveryPackageViewer';
 import CameraScreen from './src/screens/common/CameraScreen';
 import ProfileEditor from './src/screens/main/managment/ProfileEditor';
+import AddDriver from './src/screens/main/managment/AddDriver';
+import PromotionManager from './src/screens/main/managment/PromotionManager';
+import Wallet from './src/screens/main/managment/Wallet';
+import WalletHistory from './src/screens/main/managment/WalletHistory';
+import WalletDeposit from './src/screens/main/managment/WalletDeposit';
+import WithdrawRequest from './src/screens/main/managment/WithdrawRequest';
+import WithdrawRequestViewer from './src/screens/main/managment/WithdrawRequestViewer';
+import DriverRatingViewer from './src/screens/main/managment/DriverRatingViewer';
+import SystemLogger from './src/screens/main/managment/SystemLogger';
 
 const Stack = createNativeStackNavigator()
 
@@ -82,6 +91,51 @@ const App = () => {
               <Stack.Screen
                 name='ProfileEditor'
                 component={ProfileEditor}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='AddDriver'
+                component={AddDriver}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='PromotionManager'
+                component={PromotionManager}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='Wallet'
+                component={Wallet}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='WalletHistory'
+                component={WalletHistory}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='WalletDeposit'
+                component={WalletDeposit}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='WithdrawRequest'
+                component={WithdrawRequest}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='WithdrawRequestViewer'
+                component={WithdrawRequestViewer}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='DriverRatingViewer'
+                component={DriverRatingViewer}
+                options={{ animation: 'slide_from_right' }}
+              />
+              <Stack.Screen
+                name='SystemLogger'
+                component={SystemLogger}
                 options={{ animation: 'slide_from_right' }}
               />
             </>

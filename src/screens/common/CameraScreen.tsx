@@ -1,4 +1,4 @@
-import { View, Text, StatusBar, StyleSheet, Linking, TouchableOpacity, DeviceEventEmitter, ToastAndroid, Image, ImageSourcePropType } from 'react-native'
+import { View, Text, StatusBar, StyleSheet, Linking, TouchableOpacity, DeviceEventEmitter, BackHandler, ToastAndroid, Image, ImageSourcePropType } from 'react-native'
 import React, { useEffect, useRef, useState } from 'react'
 import { align_items_center, align_self_baseline, align_self_center, align_self_flex_start, bg_danger, bg_primary, border_radius_pill, bottom_0, flex_1, flex_row, fs_semi_large, justify_center, left_0, mb_20, mr_10, mr_20, position_absolute, py_10, py_5, Style, text_white, top_0, w_100 } from '../../stylesheets/primary-styles'
 import { Camera, useCameraDevices, CameraDevice, PhotoFile } from 'react-native-vision-camera'
@@ -6,11 +6,31 @@ import { Button, Icon } from '@rneui/themed'
 import { BlurView } from '@react-native-community/blur'
 import { launchImageLibrary } from 'react-native-image-picker';
 import { PermissionService } from '../../services/PermissionService'
+import { throttleFunc } from '../../utils/ultilities'
+import { debounce } from '../../utils/ultilities'
+import { throttle } from '../../utils/ultilities'
 
 export default function CameraScreen({ route, navigation }) {
     const devices = useCameraDevices()
     const device = (route.params?.useFront) ? devices.front : devices.back
     const [usable, setUsable] = useState(false)
+
+    useEffect(() => {
+        const stack = StatusBar.pushStackEntry({
+            backgroundColor: 'transparent',
+            barStyle: 'light-content'
+        })
+
+        BackHandler.addEventListener('hardwareBackPress', () => {
+            navigation.goBack()
+            DeviceEventEmitter.emit('event.Camera.onBackPress')
+            return true
+        })
+
+        return () => {
+            StatusBar.popStackEntry(stack)
+        }
+    }, [])
 
     useEffect(() => {
         PermissionService.Camera.checkPermission(

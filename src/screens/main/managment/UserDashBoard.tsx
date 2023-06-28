@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, FlatList, TouchableNativeFeedback, Alert, StatusBar, TouchableOpacity, ToastAndroid, TextInput, ListRenderItem, DeviceEventEmitter } from 'react-native'
 import React, { useMemo } from 'react'
-import { Style, align_items_center, align_self_center, bg_black, bg_danger, bg_primary, bg_white, border_radius_pill, flex_1, flex_row, fw_bold, h_100, justify_center, mb_10, mb_20, ml_15, mt_10, mt_15, mt_20, mt_25, mx_10, mx_15, mx_20, my_20, overflow_hidden, p_15, p_20, p_25, position_absolute, px_10, py_10, w_100 } from '../../../stylesheets/primary-styles'
-import { Avatar, BottomSheet, Button, CheckBox, Icon, Image, ListItem } from '@rneui/themed';
+import { Style, align_items_center, align_self_center, bg_black, bg_danger, bg_primary, bg_white, border_radius_pill, flex_1, flex_row, fw_700, fw_bold, h_100, justify_center, mb_10, mb_20, mb_5, ml_15, mr_5, mt_10, mt_15, mt_20, mt_25, mx_10, mx_15, mx_20, my_20, overflow_hidden, p_15, p_20, p_25, position_absolute, px_10, px_20, py_10, py_5, text_black, w_100 } from '../../../stylesheets/primary-styles'
+import { AirbnbRating, Avatar, BottomSheet, Button, CheckBox, Icon, Image, ListItem } from '@rneui/themed';
 import { Shadow } from 'react-native-shadow-2'
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { GraphQLService } from '../../../services/GraphQLService'
@@ -82,7 +82,16 @@ function RenderListItem({ item, index }) {
         />
         <ListItem.Content>
           <ListItem.Title style={fw_bold}>{renderItem.firstName + ' ' + renderItem.lastName}</ListItem.Title>
-          <ListItem.Subtitle>{renderItem.phone}  •  {citizenId}</ListItem.Subtitle>
+          {
+            (renderItem.averageRating) ?
+              <View style={[justify_center, flex_row]}>
+                <Text style={text_black}>{renderItem.phone} •   </Text>
+                <Text style={[text_black, mr_5]}>{renderItem.averageRating}</Text>
+                <Icon name='star' type='font-awesome' size={20} color={'#eca42c'} />
+              </View>
+              :
+              <ListItem.Subtitle>{renderItem.phone}  •  {citizenId}</ListItem.Subtitle>
+          }
         </ListItem.Content>
         {
           (renderItem.deleted) ?
@@ -445,6 +454,13 @@ function UserBottomSheetContent(props: {
     )
   }
 
+  function openWallet() {
+    props.onCloseBtmSheet()
+    navigation.navigate('Wallet' as never, {
+      shipperId: user?.id
+    } as never)
+  }
+
   return (
     <View style={styles.btmSheetContainer}>
       <View style={[overflow_hidden, Style.border('#f4978e', 5, 'solid'), align_self_center, border_radius_pill]}>
@@ -458,6 +474,25 @@ function UserBottomSheetContent(props: {
             <Icon name='person-outline' type='material' size={50} style={Style.backgroundColor('#fcd5ce')} color='#f4978e' />
         }
       </View>
+
+      {
+        (user?.averageRating) ?
+          <>
+            <View style={[align_items_center, mt_10, mb_5]}>
+              <View style={[flex_row, Style.backgroundColor('#e9d8a6a3'), px_20, py_5, border_radius_pill]}>
+                <Text style={[Style.fontSize(17), fw_700, Style.textColor('#ca6702')]}>{user.averageRating}</Text>
+                <Text style={[Style.fontSize(17), fw_700]}> /5</Text>
+              </View>
+            </View>
+            <AirbnbRating
+              size={25}
+              showRating={false}
+              defaultRating={user?.averageRating}
+              isDisabled
+            />
+          </>
+          : null
+      }
 
       <View style={[Style.dimen(1, '95%'), Style.backgroundColor('#8a8c8f66'), align_self_center, mt_20]} />
 
@@ -491,6 +526,19 @@ function UserBottomSheetContent(props: {
         titleStyle={Style.textColor('#0a83ff')}
         onPress={openDeliveryPackageViewer}
       />
+
+      {
+        (props.userType === UserDashBoardType.SHIPPERS) ?
+          <Button
+            title={'Open Wallet'}
+            buttonStyle={Style.borderRadius(10)}
+            color='#fca31133'
+            titleStyle={Style.textColor('#ee9b00')}
+            onPress={openWallet}
+            containerStyle={mt_20}
+          />
+          : null
+      }
 
       <Button
         title={"Edit"}

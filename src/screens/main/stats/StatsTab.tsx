@@ -1,17 +1,64 @@
-import { View, Text, StyleSheet, ScrollView, TouchableNativeFeedback, StatusBar, StyleProp, ViewStyle, Dimensions } from 'react-native'
-import React, { useMemo, useState } from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableNativeFeedback, StatusBar, StyleProp, ViewStyle, Dimensions, ToastAndroid, RefreshControl } from 'react-native'
+import React, { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { Style, align_items_center, bg_black, bg_primary, border_radius_pill, clr_primary, clr_transparent, flex_1, flex_row, fs_large, fw_bold, justify_center, justify_space_around, m_10, mb_10, mb_15, mb_20, mb_25, ml_10, mr_10, mr_20, mt_10, mt_20, mt_25, overflow_hidden, p_10, position_absolute, position_relative, px_10, px_5, py_10, py_5, right_0, text_white, top_0, w_100 } from '../../../stylesheets/primary-styles'
 import { BottomSheet, BottomSheetProps, Button, Icon } from '@rneui/themed';
 import { Shadow } from 'react-native-shadow-2';
 import { LineChart, PieChart } from 'react-native-chart-kit';
 import { GraphQLService } from '../../../services/GraphQLService';
+import { ReportsService } from '../../../services/ReportsService';
 
 export default function StatsTab() {
+    const [allTimePack, setAllTimePack] = useState(0)
+    const [totalUsers, setTotalUsers] = useState(0)
+    const [totalShipper, setTotalShipper] = useState(0)
+    const [onlineShipper, setOnlineShipper] = useState(0)
+    const [onlineUsers, setOnlineUsers] = useState(0)
 
-    StatusBar.setBackgroundColor('#ffffffcc')
+    const [refreshing, setRefreshing] = React.useState(false);
+    const revenueChartReload = useRef(() => { })
+    const distributionChartReload = useRef(() => { })
+
+    useEffect(() => {
+        const stack = StatusBar.pushStackEntry({
+            backgroundColor: '#fff'
+        })
+
+        loadQuickReports()
+
+        return () => {
+            StatusBar.popStackEntry(stack)
+        }
+    }, [])
+
+    function loadQuickReports() {
+        ReportsService.quickReports(
+            (reports) => {
+                setAllTimePack(reports.allTimePackages)
+                setTotalUsers(reports.totalUsers)
+                setTotalShipper(reports.totalShipper)
+                setOnlineShipper(reports.onlineShippers)
+                setOnlineUsers(reports.onlineUsers)
+            },
+            (error) => {
+                console.log('>>>>>> error: ', { ...error })
+                ToastAndroid.show('Cannot load quick reports: server timeout', ToastAndroid.LONG)
+            }
+        )
+    }
+
+    function onRefresh() {
+        loadQuickReports()
+        revenueChartReload.current?.()
+        distributionChartReload.current?.()
+    }
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+        >
             <View style={flex_row, align_items_center}>
                 <View style={styles.header}>
                     <Text style={[fw_bold, Style.fontSize(19), Style.textColor('#fff')]}>Quick Dashboard</Text>
@@ -23,7 +70,7 @@ export default function StatsTab() {
                     wrapperStyle={[flex_1]}
                 >
                     <View style={[align_items_center]}>
-                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#fcbf49')]}>2</Text>
+                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#fcbf49')]}>{totalShipper}</Text>
                         <Text>Shippers</Text>
                     </View>
                 </Card>
@@ -32,7 +79,7 @@ export default function StatsTab() {
                     wrapperStyle={flex_1}
                 >
                     <View style={[align_items_center]}>
-                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#ef476f')]}>2</Text>
+                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#ef476f')]}>{totalUsers}</Text>
                         <Text>Clients</Text>
                     </View>
                 </Card>
@@ -44,7 +91,7 @@ export default function StatsTab() {
                     wrapperStyle={[flex_1]}
                 >
                     <View style={[align_items_center]}>
-                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#06d6a0')]}>1</Text>
+                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#06d6a0')]}>{onlineShipper}</Text>
                         <Text>Online Shippers</Text>
                     </View>
                 </Card>
@@ -53,7 +100,7 @@ export default function StatsTab() {
                     wrapperStyle={flex_1}
                 >
                     <View style={[align_items_center]}>
-                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#118ab2')]}>1</Text>
+                        <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#118ab2')]}>{onlineUsers}</Text>
                         <Text>Online Clients</Text>
                     </View>
                 </Card>
@@ -63,7 +110,7 @@ export default function StatsTab() {
                 wrapperStyle={[flex_1]}
             >
                 <View style={[align_items_center]}>
-                    <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#eb5e28')]}>2</Text>
+                    <Text style={[fw_bold, Style.fontSize(20), Style.textColor('#eb5e28')]}>{allTimePack}</Text>
                     <Text>Total packages</Text>
                 </View>
             </Card>
@@ -74,8 +121,8 @@ export default function StatsTab() {
                 </View>
             </View>
 
-            <RevanueChart />
-            <CategoryDistributionChart />
+            <RevanueChart onDataReloadRequire={revenueChartReload} />
+            <CategoryDistributionChart onDataReloadRequire={distributionChartReload} />
 
             <View style={[w_100, Style.height(100)]} />
         </ScrollView>
@@ -137,19 +184,54 @@ class Quarter {
     static Types = ['Q1', 'Q2', 'Q3', 'Q4', 'Q12', 'Q34', 'WHOLE_YEAR']
 }
 
-function RevanueChart() {
+function quarterToMonths(type: QuarterType) {
+    const date = new Date(Date.now())
+
+    function month(month: number) {
+        return `${month}-${date.getFullYear()}`
+    }
+
+    switch (type) {
+        case QuarterType.Q1: return [month(1), month(2), month(3)]
+        case QuarterType.Q2: return [month(4), month(5), month(6)]
+        case QuarterType.Q3: return [month(7), month(8), month(9)]
+        case QuarterType.Q4: return [month(10), month(11), month(12)]
+        case QuarterType.Q12: return [month(1), month(2), month(3), month(4), month(5), month(6)]
+        case QuarterType.Q34: return [month(7), month(8), month(9), month(10), month(11), month(12)]
+        default: return [month(1), month(2), month(3), month(4), month(5), month(6), month(7), month(8), month(9), month(10), month(11), month(12)]
+    }
+}
+
+function RevanueChart(props: {
+    onDataReloadRequire: MutableRefObject<() => void>
+}) {
     const [quarter, setQuarter] = useState<Quarter>(new Quarter(QuarterType.WHOLE_YEAR, []))
-    const [btmSheetVIsible, setBtmSheetVIsible] = useState(true)
+    const [btmSheetVIsible, setBtmSheetVIsible] = useState(false)
     const [quarterType, _setQuarterType] = useState<QuarterType>(QuarterType.WHOLE_YEAR)
 
     const months = useMemo(() => (quarter) ? quarter._months : ['January', 'Febuary', 'March'], [quarter])
     const data: number[] = useMemo(() => (quarter?._data?.length > 0) ? quarter._data : months.map(value => 0), [quarter?._data])
 
+    useEffect(() => {
+        props.onDataReloadRequire.current = getChartData
+    }, [])
+
     React.useEffect(() => {
-        // update quarter here
-        setQuarter(new Quarter(quarterType, [50000, 75000]))
+        getChartData()
+
     }, [quarterType])
 
+    function getChartData() {
+        // update quarter here
+        ReportsService.revenuesOfMonths(
+            quarterToMonths(quarterType),
+            (list) => setQuarter(new Quarter(quarterType, list.map(revenue => revenue.value))),
+            (error) => {
+                console.log('>>>>>> error: ', { ...error })
+                ToastAndroid.show('Cannot load revenue: server timeout', ToastAndroid.LONG)
+            }
+        )
+    }
 
     function setQuarterType(type: QuarterType) {
         if (quarterType !== type) {
@@ -274,8 +356,25 @@ function randomColor(reset: boolean = false) {
 
 type CategoryDistribution = GraphQLService.Type.CategoryDistribution
 
-function CategoryDistributionChart() {
-    const [categories, setCategories] = useState<CategoryDistribution[]>([])
+function CategoryDistributionChart(props: {
+    onDataReloadRequire: MutableRefObject<() => void>
+}) {
+    const [categories, setCategories] = useState<ReportsService.DistributionData[]>([])
+
+    function getChart() {
+        ReportsService.categoryDistribution(
+            (list) => setCategories(list),
+            (error) => {
+                console.log('>>>>>> error: ', { ...error })
+                ToastAndroid.show('Cannot load pie chart: server timeout', ToastAndroid.LONG)
+            }
+        )
+    }
+
+    useEffect(() => {
+        getChart()
+        props.onDataReloadRequire.current = getChart
+    }, [])
 
     const data = useMemo(() => {
         if (categories.length > 0) {

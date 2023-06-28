@@ -220,7 +220,7 @@ function PackageListItem({ item, index, backColor }) {
     }
 
     return (
-        <TouchableOpacity activeOpacity={0.6} onPress={onItemPressed}>
+        <TouchableOpacity style={mt_15} activeOpacity={0.6} onPress={onItemPressed}>
             <View style={[flex_row, mx_10, my_5]}>
                 <View style={[mr_5]}>
                     <View style={[Style.backgroundColor(backColor), border_radius_pill, Style.padding(2), mr_10]}>
@@ -235,7 +235,7 @@ function PackageListItem({ item, index, backColor }) {
                     <Text>{creationDate}</Text>
                 </View>
                 <View style={[justify_center, ml_15]}>
-                    <Text style={[fw_bold, Style.fontSize(15), Style.textColor(backColor)]}>12000</Text>
+                    <Text style={[fw_bold, Style.fontSize(15), Style.textColor(backColor)]}>{deliveryPackage.price}</Text>
                 </View>
             </View>
         </TouchableOpacity>
